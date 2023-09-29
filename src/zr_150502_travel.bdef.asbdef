@@ -1,0 +1,75 @@
+managed implementation in class zbp_r_150502_travel unique;
+strict ( 2 );
+
+
+// Wurzelknoten Travel
+define behavior for ZR_150502_Travel alias Travel
+persistent table z150502_atravel
+lock master
+authorization master ( instance )
+//etag master <field_name>
+{
+  create;
+  update;
+  delete;
+  association _Bookings { create; }                     //Create booking ist abhängig von einer Reise
+
+  static action show_test_message;
+  action cancel_booking;
+  action maintain_booking_fees parameter ZA_150502_BookingFees;
+  validation validate_travel_period on save { create; }
+  determination determin_travel_id on modify { update; }
+
+  //UUID automatisch generieren, wenn eine Reise erstellt wird
+  field ( readonly, numbering : managed ) TravelUuid;
+  field ( readonly ) TravelID, TotalPrice;
+  field ( readonly ) Createdby, Createdat, Lastchangedby, Lastchangedat;
+
+  field ( mandatory : create ) AgencyId, BeginDate, CustomerId, EndDate;
+  field ( readonly : update ) AgencyId, BeginDate, CustomerId, EndDate;
+  field ( mandatory ) Description;
+
+  mapping for z150502_atravel corresponding
+    {
+      AgencyId     = agency_id;
+      BeginDate    = begin_date;
+      BookingFee   = booking_fee;
+      CurrencyCode = currency_code;
+      CustomerID   = customer_id;
+      EndDate      = end_date;
+      TotalPrice   = total_price;
+      TravelID     = travel_id;
+      TravelUUID   = travel_uuid;
+    }
+
+}
+
+// Kindknoten Booking
+define behavior for ZR_150502_Booking alias Booking
+persistent table z150502_abooking
+lock dependent by _Travel
+authorization dependent by _Travel
+//etag master <field_name>
+{
+  update;
+  delete;
+
+  field ( readonly, numbering : managed ) BookingUUID;  //UUID automatisch generieren, wenn eine Reise erstellt wird
+  field ( readonly ) TravelUuid;
+
+  association _Travel;
+
+  mapping for z150502_abooking corresponding
+    {
+      BookingDate  = booking_date;
+      BookingID    = booking_id;
+      BookingUUID  = booking_uuid;
+      CarrierID    = carrier_id;
+      ConnectionID = connection_id;
+      CurrencyCode = currency_code;
+      CustomerID   = customer_id;
+      FlightDate   = flight_date;
+      FlightPrice  = flight_price;
+      TravelUUID   = travel_uuid;
+    }
+}
